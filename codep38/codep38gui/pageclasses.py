@@ -25,6 +25,9 @@ from codep38.codep38gui.guitools import window_properties
 from codep38.codep38gui.guitools import place_bellow
 from codep38.codep38gui.guitools import show_frame
 
+from codep38.codep38gui.pagecalendar import create_calendar
+
+
 class AppMain(tk.Tk):
     '''
     '''
@@ -484,7 +487,7 @@ class PageCalendar(tk.Frame):
 
         page_name  = self.__class__.__name__
 
-        #create_calendar(self, master, page_name, institute, ctg_path)
+        create_calendar(self, master, page_name, institute, ctg_path)
 
         setcontrollerbutton = SetControllerButton(master, container_button,page_name)
 

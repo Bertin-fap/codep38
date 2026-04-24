@@ -48,7 +48,6 @@ def last_available_years(ctg_path, year_number=2024):
     try:
         list_dir = os.listdir(ctg_path)
         
-        print(list_dir)
         years_full_list = list()
         for year in list_dir:
             if re.findall(r'Année\s\d{4}$',year):

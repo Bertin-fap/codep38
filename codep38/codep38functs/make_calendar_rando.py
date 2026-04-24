@@ -1,3 +1,5 @@
+__all__ = ['make_calendar_rando']
+
 from datetime import date
 import datetime
 import calendar
@@ -5,6 +7,7 @@ import re
 from collections import defaultdict
 from textwrap import wrap
 import unicodedata
+from tkinter import messagebox
 
 import os
 from pathlib import Path
@@ -15,12 +18,13 @@ import xlrd
 from docxtpl import DocxTemplate
 from docxcompose.composer import Composer
 from docx import Document as Document_compose
+import codep38.codep38gui.guiglobals as gg
 
 
 
 
 
-def make_table_matiere(df,PATH_OUTPUT_RANDOS,PATH_TEMPLATES_RANDOS):
+def make_table_matiere(year,df,PATH_OUTPUT_RANDOS,PATH_TEMPLATES_RANDOS):
 
     output_file = PATH_OUTPUT_RANDOS / Path( 'liste_matiere.docx')
     
@@ -75,7 +79,7 @@ def combine_all_docx(list_docx,year,PATH_OUTPUT_RANDOS,PATH_TEMPLATES_RANDOS):
     print(combine_file)
     composer.save(combine_file)
 
-def builds_organisation_docx(df,year,PATH_TEMPLATES_RANDOS):
+def builds_organisation_docx(df,year,PATH_TEMPLATES_RANDOS,PATH_OUTPUT_RANDOS):
     
     long = 1  # for future use
     file_list = []
@@ -114,7 +118,7 @@ def builds_organisation_docx(df,year,PATH_TEMPLATES_RANDOS):
             
         doc.render(f)
         #    
-        output_file = gg.PATH_OUTPUT_RANDOS / Path("5-sejour"+str(idx)+".docx")
+        output_file = PATH_OUTPUT_RANDOS / Path("5-sejour"+str(idx)+".docx")
         doc.save(output_file)
         list_docx.append(output_file)
     
@@ -129,7 +133,7 @@ def normalize_time(s):
     t = l[0].zfill(2)+ " h " + minutes
     return t
 
-def dic_rando(year,root):
+def _dic_rando(year,root):
     
     YEAR = year
     jours = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche']
@@ -521,13 +525,13 @@ def dic_rando(year,root):
         
     return dic_rando
     
-def make_calendar_rando(year):
-    #year = 2026
-    root = Path(r"C:\Users\franc\CODEP38") / Path(str(year)) / Path('randonnees') 
-    PATH_TEMPLATES_RANDOS = Path.home() / Path(r"Dropbox\Codep 38") / Path(f"Année {str(year)} \Calendrier\TEMPLATES")
+def make_calendar_rando(year,ctg_path):
+    
+    root = Path.home() / Path('CODEP38') / Path(str(year)) / Path('randonnees') 
+    PATH_TEMPLATES_RANDOS = Path(ctg_path) / Path(f"Année {str(year)}\Calendrier\TEMPLATES")
     PATH_OUTPUT_RANDOS = Path.home() / Path('CODEP38') / Path(str(year)) / Path('Calendrier')
     
-    dic_rando = dic_rando(year,root)
+    dic_rando = _dic_rando(year,root)
     
     df = pd.DataFrame(dic_rando)
     df = df.sort_values(by='full_date',ascending=True)
@@ -545,8 +549,8 @@ def make_calendar_rando(year):
     df['template'] = df['Type de manifestation'].map(gg.templates_dict)
     #df = df.drop(['full_date'],axis=1)
     
-    list_docx = builds_organisation_docx(df,year)
-    make_table_matiere(df,PATH_OUTPUT_RANDOS,PATH_TEMPLATES_RANDOS)
+    list_docx = builds_organisation_docx(df,year,PATH_TEMPLATES_RANDOS,PATH_OUTPUT_RANDOS)
+    make_table_matiere(year,df,PATH_OUTPUT_RANDOS,PATH_TEMPLATES_RANDOS)
     list_docx.insert(0, PATH_OUTPUT_RANDOS / Path('liste_matiere.docx'))
     list_docx.insert(1, PATH_TEMPLATES_RANDOS / Path('reunion assurance.docx'))
     
@@ -556,3 +560,5 @@ def make_calendar_rando(year):
     df.to_excel(output_file,index = False)
     dg = df.groupby(['Type de manifestation'])['nom_randonnee'].count()
     print(dg)
+    
+    messagebox.showinfo("Information", f"votre fichier a été créé sous: {output_file}")
