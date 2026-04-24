@@ -17,6 +17,7 @@ __all__ = ['ACTIVITE_LIST',
            'BUTT_TENDANCE_SORTIES',
            'CONTAINER_BUTTON_HEIGHT_PX',
            'DIR_SORTIES_LIST',
+           'dropbox',
            'FIRST_YEAR',
            'FONT_NAME',
            'HELP_EVOLUTION_EFFECTIF',
@@ -106,7 +107,7 @@ __all__ = ['ACTIVITE_LIST',
            'TEXT_VERSION',
            'TEXT_YEAR_PC',
            'TEXT_YEAR_PI',
-           'nextcloud']
+           ]
            
 # Standard HELP_SEJOURlibrary imports
 import math           
@@ -123,9 +124,7 @@ VERSION ='1.0.0'
 FIRST_YEAR = 2021
 
 # Setting the title of the application main window (internal)
-APPLICATION_WINDOW_TITLE = f"CTG_Meter - Analyse des statistiques des effectifs et des sorties"
-
-nextcloud = "Nextcloud2"
+APPLICATION_WINDOW_TITLE = f"CoDep_Meter - Analyse du CoDep38"
 
 ######################## Definition of display globals ###########################
 
@@ -284,7 +283,7 @@ BUTTON_LABELS = {'PageEffectif'   : "Effectif",
 ########################## Cover Page (BiblioMeter launching Page) ##########################
 
 # Titre de la page
-TEXT_TITLE                  = "- CTG_Meter -\nInitialisation de l'analyse"
+TEXT_TITLE                  = "- Codep38_Meter -\nInitialisation de l'analyse"
 
 # Choix de l'année de l'Institut
 TEXT_INSTITUTE              = "Sélection de l'Institut"
@@ -467,4 +466,5 @@ templates_dict = {'Route': 'template_randonnees_route.docx',
                   'Vtt':'template_randonnees_vtt.docx',
                   'Vtt/ Gravel':'template_randonnees_vtt_gravel.docx',
                   'Route/ Vtt/ Pédestre/ Gravel': 'template_randonnees_route_vtt_pedestre_gravel.docx'}
+dropbox = 'Dropbox\Codep 38'
 
