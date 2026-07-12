@@ -1,2 +1,2 @@
-include ctg/ctgfuncts/CTG_RefFiles/*.*
-include make_ctg_exe.bat
+include codep38/codep38functs/CTG_RefFiles/*.*
+include make_codep_exe.bat

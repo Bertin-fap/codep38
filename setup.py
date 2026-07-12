@@ -7,19 +7,19 @@ from pathlib import Path
 
 # read the contents of your README file
 this_directory = path.abspath(path.dirname(__file__))
-config_dir = this_directory / Path('ctg') / Path("ctgfuncts") / Path("CTG_RefFiles")
+config_dir = this_directory / Path('codep38') / Path("codep38functs") / Path("CTG_RefFiles")
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
     
-shutil.copy(path.join(this_directory, 'CTG_METER.py'),
+shutil.copy(path.join(this_directory, 'CODEP_METER.py'),
             config_dir)
 install_requires = open(path.join(this_directory, 'requirements.txt'), encoding='utf-8').read().strip().split('\n') 
 
 # This setup is suitable for "python setup.py develop".
 
-setup(name='ctg',
+setup(name='codep38',
       version='1.1.0',
-      description='A toolbox for ctg statistics analysis',
+      description='A toolbox for codep38 statistics analysis',
       long_description=long_description,
       long_description_content_type='text/markdown',
       include_package_data = True,
@@ -37,5 +37,5 @@ setup(name='ctg',
       author= 'f. bertin',
       author_email= 'francois.bertin7@wanadoo.fr',
       url= 'https://github.com/Bertin-fap/ctgutils ',
-      packages=['ctg\ctgfuncts','ctg\ctggui'],
+      packages=['codep38\codep38functs','codep38\codep38gui'],
       )
