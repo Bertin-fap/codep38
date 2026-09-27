@@ -13,6 +13,26 @@ from docxcompose.composer import Composer
 from docx import Document as Document_compose
 from docx.shared import Cm, Emu, Inches, Mm
 
+def read_formateur_codep38(year):
+
+    # Le fichier formateur s.csv est disponible sur l'espace structure FFVelo Formations/Extractions
+    
+    root = Path.home() / Path(r'Dropbox/Codep 38') / Path(f'Année {str(year)}') / Path(r'Secretariat/codep_effectif_club')
+    file = 'formateurs.csv'
+    df = pd.read_csv(root / Path(file),
+                     sep=';',
+                     encoding='latin-1')
+    return df
+    
+def build_list_animateurs(df,id_):
+    dg = df.query('`Code Structure`==@id_ and `Niveau 2`== "Animateur Club"')
+    animateur = ', '.join(dg["Nom & Prénom"])
+    dg = df.query('`Code Structure`==@id_ and `Niveau 2`== "Initiateur"')
+    initiateur = ', '.join(dg["Nom & Prénom"])
+    dg = df.query('`Code Structure`==@id_ and `Niveau 2`== "Moniteur fédéral"')
+    moniteur = ', '.join(dg["Nom & Prénom"])
+    return animateur,initiateur,moniteur
+
 def date_today():
     today = date.today()
     d = str(today.year)+str(today.month).zfill(2)+str(today.day).zfill(2)
@@ -48,7 +68,7 @@ def combine_all_docx(list_docx,year):
     combine_file = PATH_SAUVEGARDE / file_name
     composer.save(combine_file)
 
-def make_page_de_garde(dic_stat):
+def make_page_de_garde(dic_stat,year):
     #qrc_sejour.append(InlineImage(doc,qrc_name,Cm(1.5)))
     output_file = PATH_OUTPUT / Path( 'premiere-de-couverture-bureau.docx')
     
@@ -57,7 +77,8 @@ def make_page_de_garde(dic_stat):
     file_image = PATH_OUTPUT / Path('histo.jpeg')
     
     dic_stat['image1'] = InlineImage(doc,r'C:/Users/franc/CODEP38/Temp/histo.jpeg',Cm(15)) 
-    dic_stat['image2'] = InlineImage(doc,r"C:/Users/franc/CODEP38/Temp/nbr_adherents_club38.png",Cm(16)) 
+    dic_stat['image2'] = InlineImage(doc,r"C:/Users/franc/CODEP38/Temp/nbr_adherents_club38.png",Cm(16))
+    dic_stat['year'] = year
     context = dic_stat
     doc.render(context)
     doc.save(output_file)
@@ -65,9 +86,14 @@ def make_page_de_garde(dic_stat):
 def make_table_matiere(club_list):
 
     output_file = PATH_OUTPUT / Path( 'liste_matiere.docx')
-                
+    page_dep = 11
+    frameworks = []
+    for idx,club in enumerate(club_list):
+        frameworks.append(dict(club = club,
+                              page = page_dep + idx))
+
     context ={'year': year,
-              'frameworks': club_list}
+              'frameworks': frameworks}
     template_docx = PATH_TEMPLATES  / Path('template_Liste_matiere_bureau.docx')
     doc = DocxTemplate(template_docx) 
     doc.render(context)
@@ -99,41 +125,43 @@ def make_hyperlink(courriel,doc):
     
     return rt
 
-def builds_organisation_docx(result,year,template_path_docx,PATH_RANDO):
+def builds_organisation_docx(result,year,template_path_docx,
+                             PATH_RANDO,
+                             PATH_OUTPUT):
 
     def correspondante_feminine(id):
         try:
-           t1 = telephonne(result.query('ID == @id and F == "F"')['Tel portable'].tolist())
-           t2 = telephonne(result.query('ID == @id and F == "F"')['Tel fixe'].tolist())
+           t1 = telephonne(result.query('ID == @id and F == "F"')['N° Portable'].tolist())
+           t2 = telephonne(result.query('ID == @id and F == "F"')['N° Tél'].tolist())
            telephone = join_telephonne(t1,t2)
            return (result.query('ID == @id and F == "F"')['Nom'].tolist()[0],
-                   result.query('ID == @id and F == "F"')['Adresse'].tolist()[0],
+                   result.query('ID == @id and F == "F"')['Ville'].tolist()[0],
                    telephone,
-                   make_hyperlink(result.query('ID == @id and F == "F"')['Adresse email'].tolist()[0],doc),)
+                   make_hyperlink(result.query('ID == @id and F == "F"')['E-mail'].tolist()[0],doc),)
         except:
             return ('','','','')
 
     def correspondante(id):
-        t1 = telephonne(result.query('ID == @id and C == "C"')['Tel portable'].tolist())
-        t2 = telephonne(result.query('ID == @id and C == "C"')['Tel fixe'].tolist())
+        t1 = telephonne(result.query('ID == @id and C == "C"')['N° Portable'].tolist())
+        t2 = telephonne(result.query('ID == @id and C == "C"')['N° Tél'].tolist())
         telephone = join_telephonne(t1,t2)
         try:
            return (result.query('ID == @id and C == "C"')['Nom'].tolist()[0],
-                   result.query('ID == @id and C == "C"')['Adresse'].tolist()[0],
+                   result.query('ID == @id and C == "C"')['Ville'].tolist()[0],
                    telephone,
-                   make_hyperlink(result.query('ID == @id and C == "C"')['Adresse email'].tolist()[0],doc),)
+                   make_hyperlink(result.query('ID == @id and C == "C"')['E-mail'].tolist()[0],doc),)
         except:
             return ('','','','')
 
     def correspondante_securite(id):
-        t1 = telephonne(result.query('ID == @id and D == "D"')['Tel portable'].tolist())
-        t2 = telephonne(result.query('ID == @id and D == "D"')['Tel fixe'].tolist())
+        t1 = telephonne(result.query('ID == @id and D == "D"')['N° Portable'].tolist())
+        t2 = telephonne(result.query('ID == @id and D == "D"')['N° Tél'].tolist())
         telephone = telephone = join_telephonne(t1,t2)
         try:
            return (result.query('ID == @id and D == "D"')['Nom'].tolist()[0],
-                               result.query('ID == @id and D == "D"')['Adresse'].tolist()[0],
+                               result.query('ID == @id and D == "D"')['Ville'].tolist()[0],
                                telephone,
-                               make_hyperlink(result.query('ID == @id and D == "D"')['Adresse email'].tolist()[0],doc),)
+                               make_hyperlink(result.query('ID == @id and D == "D"')['E-mail'].tolist()[0],doc),)
         except:
             return ('','','','')
     #file_mf = r"C:\Users\franc\Dropbox\Codep 38\Année 2026\Clubs_38_au_12_01_2026.xlsx"
@@ -141,14 +169,14 @@ def builds_organisation_docx(result,year,template_path_docx,PATH_RANDO):
     #web_df.rename(columns={'N°': 'ID',}, inplace=True)
 
     def correspondante_jeune(id):
-        t1 = telephonne(result.query('ID == @id and J == "J"')['Tel portable'].tolist())
-        t2 = telephonne(result.query('ID == @id and J == "J"')['Tel fixe'].tolist())
+        t1 = telephonne(result.query('ID == @id and J == "J"')['N° Portable'].tolist())
+        t2 = telephonne(result.query('ID == @id and J == "J"')['N° Tél'].tolist())
         telephone = telephone = join_telephonne(t1,t2)
         try:
            return (result.query('ID == @id and J == "J"')['Nom'].tolist()[0],
-                               result.query('ID == @id and J == "J"')['Adresse'].tolist()[0],
+                               result.query('ID == @id and J == "J"')['Ville'].tolist()[0],
                                telephone,
-                               make_hyperlink(result.query('ID == @id and J == "J"')['Adresse email'].tolist()[0],doc),)
+                               make_hyperlink(result.query('ID == @id and J == "J"')['E-mail'].tolist()[0],doc),)
         except:
             return ('','','','')
 
@@ -156,11 +184,11 @@ def builds_organisation_docx(result,year,template_path_docx,PATH_RANDO):
         
         l = result.query('ID == @id and P=="P"')
         np = l['Nom'].tolist()[0]
-        ap = l['Adresse'].tolist()[0]
-        t1 = telephonne([l['Tel portable'].tolist()[0]])
-        t2 = telephonne([l['Tel fixe'].tolist()[0]])
+        ap = l['Ville'].tolist()[0]
+        t1 = telephonne([l['N° Portable'].tolist()[0]])
+        t2 = telephonne([l['N° Tél'].tolist()[0]])
         tp = join_telephonne(t1,t2)
-        wp = make_hyperlink(l['Adresse email'].tolist()[0],doc)
+        wp = make_hyperlink(l['E-mail'].tolist()[0],doc)
         nbr_p = 1
         
         add_2 = l['Adresse email 2'].tolist()[0]
@@ -176,11 +204,11 @@ def builds_organisation_docx(result,year,template_path_docx,PATH_RANDO):
         if len(l)>1:
             nbr_p = 2
             np2 = l['Nom'].tolist()[1]
-            ap2 = l['Adresse'].tolist()[1]
-            t1 = telephonne([l['Tel portable'].tolist()[1]])
-            t2 = telephonne([l['Tel fixe'].tolist()[1]])
+            ap2 = l['Ville'].tolist()[1]
+            t1 = telephonne([l['N° Portable'].tolist()[1]])
+            t2 = telephonne([l['N° Tél'].tolist()[1]])
             tp2 = join_telephonne(t1,t2)
-            wp2 = make_hyperlink(l['Adresse email'].tolist()[1],doc)
+            wp2 = make_hyperlink(l['E-mail'].tolist()[1],doc)
             
             add_2 = l['Adresse email 2'].tolist()[1]
             if add_2:
@@ -198,17 +226,12 @@ def builds_organisation_docx(result,year,template_path_docx,PATH_RANDO):
     result.rename(columns={'Nom du Club': 'club', 
                            'Ville du Club': 'ville'}, inplace=True) 
     result = result.fillna(' ')
+    df_moniteur = read_formateur_codep38(year)
     for id in result['ID'].unique():
         
         rando_dict = make_dic_rando(PATH_RANDO)
         
-        formation_dict = {}
-        id_str = str(id)
-        formation_dict['Animateur Club'] = ''
-        formation_dict['Initiateur fédéral'] = ''
-        formation_dict['Moniteur Fédéral'] = ''
-        for x,y in df_tot_animateurs.query('IDC==@id_str').groupby(['Formation'])['Nom']:
-            formation_dict[x[0]] = ', '.join(y.tolist())
+        animateur,initiateur,moniteur = build_list_animateurs(df_moniteur,id)
         
         if result.query('ID==@id')['nbr_president'].tolist()[0]==1:
             doc = DocxTemplate(template_path_docx)
@@ -238,10 +261,10 @@ def builds_organisation_docx(result,year,template_path_docx,PATH_RANDO):
         ts = ''
         if len(secretaire) >0:
             ns_ = secretaire.tolist()[0]
-            as_ = result.query('ID == @id and S == "S"')['Adresse'].tolist()[0]
-            ws_ = make_hyperlink(result.query('ID == @id and S == "S"')['Adresse email'].tolist()[0],doc)
-            t1 = telephonne(result.query('ID == @id and S == "S"')['Tel portable'].tolist())
-            t2 = telephonne(result.query('ID == @id and S == "S"')['Tel fixe'].tolist())
+            as_ = result.query('ID == @id and S == "S"')['Ville'].tolist()[0]
+            ws_ = make_hyperlink(result.query('ID == @id and S == "S"')['E-mail'].tolist()[0],doc)
+            t1 = telephonne(result.query('ID == @id and S == "S"')['N° Portable'].tolist())
+            t2 = telephonne(result.query('ID == @id and S == "S"')['N° Tél'].tolist())
             ts = join_telephonne(t1,t2)
 
         tresorier = result.query('ID == @id and T == "T"')['Nom']
@@ -251,10 +274,10 @@ def builds_organisation_docx(result,year,template_path_docx,PATH_RANDO):
         tt = ''
         if len(tresorier) >0:
             nt_ = tresorier.tolist()[0]
-            at_ = result.query('ID == @id and T == "T"')['Adresse'].tolist()[0]
-            wt_ = make_hyperlink(result.query('ID == @id and T == "T"')['Adresse email'].tolist()[0],doc)
-            t1 = telephonne(result.query('ID == @id and T == "T"')['Tel portable'].tolist())
-            t2 = telephonne(result.query('ID == @id and T == "T"')['Tel fixe'].tolist())
+            at_ = result.query('ID == @id and T == "T"')['Ville'].tolist()[0]
+            wt_ = make_hyperlink(result.query('ID == @id and T == "T"')['E-mail'].tolist()[0],doc)
+            t1 = telephonne(result.query('ID == @id and T == "T"')['N° Portable'].tolist())
+            t2 = telephonne(result.query('ID == @id and T == "T"')['N° Tél'].tolist())
             tt = join_telephonne(t1,t2) 
        
         stat = df_merged.query('ID==@id')
@@ -308,9 +331,9 @@ def builds_organisation_docx(result,year,template_path_docx,PATH_RANDO):
             'aj': aj if flag_adress else '',
             'tj': tj,
             'wj': wj,
-            'aclub': formation_dict['Animateur Club'],
-            'ifed': formation_dict['Initiateur fédéral'],
-            'mfed': formation_dict['Moniteur Fédéral'],
+            'aclub': animateur,
+            'ifed': initiateur,
+            'mfed': moniteur,
             'stat': stat_str,
             'rando' : rando_dict[id]}  
 
@@ -324,24 +347,21 @@ def builds_organisation_docx(result,year,template_path_docx,PATH_RANDO):
         
     return list_docx, club_list
 
-year = 2026
-PATH_OUTPUT = Path.home() / Path("CODEP38") / Path('Temp')
-PATH_SAUVEGARDE = Path.home() / Path('Dropbox\Codep 38') / Path("Année " + str(year)) 
-PATH_TEMPLATES = Path.home() / Path('Dropbox\Codep 38') / Path("Année " + str(year)) 
-PATH_TEMPLATES = PATH_TEMPLATES / Path('Secretariat') /  Path("TEMPLATES")
-
-PATH_RANDO = Path.home() / Path('Dropbox\Codep 38') / Path("Année " + str(year)) 
-PATH_RANDO = PATH_RANDO / Path(r"Calendrier\randonnees\SYNTHESE") / Path(f"randos_synthese{year}_save.xlsx")
-
-template_path_docx = PATH_TEMPLATES / Path("Template_bureau.docx")
-template_path_docx_2 = PATH_TEMPLATES / Path("Template_bureau_2.docx")
-df_tot_animateurs.rename(columns={'N° Club':'IDC'},inplace=True)
-list_docx,  club_list = builds_organisation_docx(result,year,template_path_docx,PATH_RANDO)
-make_table_matiere(club_list)
-list_docx.insert(0, PATH_OUTPUT / Path('liste_matiere.docx'))
-make_page_de_garde(dic_stat)
-list_docx.insert(0, PATH_OUTPUT / Path('premiere-de-couverture-bureau.docx'))
-combine_all_docx(list_docx,year)
-
-file_name = f'ANNUAIRE_CoDep38_{date_today()}.docx'
-print("FINISHED")
+def make_calendar_word(year,result):
+    PATH_OUTPUT = Path.home() / Path("CODEP38") / Path('Temp')
+    PATH_SAUVEGARDE = Path.home() / Path('Dropbox\Codep 38') / Path("Année " + str(year)) 
+    PATH_TEMPLATES = Path.home() / Path('Dropbox\Codep 38') / Path("Année " + str(year)) 
+    PATH_TEMPLATES = PATH_TEMPLATES / Path('Secretariat') /  Path("TEMPLATES")
+    
+    PATH_RANDO = Path.home() / Path('Dropbox\Codep 38') / Path("Année " + str(year)) 
+    PATH_RANDO = PATH_RANDO / Path(r"Calendrier\randonnees\SYNTHESE") / Path(f"randos_synthese{year}_save.xlsx")
+    
+    template_path_docx = PATH_TEMPLATES / Path("Template_bureau.docx")
+    template_path_docx_2 = PATH_TEMPLATES / Path("Template_bureau_2.docx")
+    #df_tot_animateurs.rename(columns={'N° Club':'IDC'},inplace=True)
+    list_docx,  club_list = builds_organisation_docx(result,year,template_path_docx,PATH_RANDO,PATH_OUTPUT)
+    make_table_matiere(club_list)
+    list_docx.insert(0, PATH_OUTPUT / Path('liste_matiere.docx'))
+    make_page_de_garde(dic_stat,year)
+    list_docx.insert(0, PATH_OUTPUT / Path('premiere-de-couverture-bureau.docx'))
+    combine_all_docx(list_docx,year)

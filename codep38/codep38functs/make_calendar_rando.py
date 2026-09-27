@@ -7,7 +7,6 @@ import re
 from collections import defaultdict
 from textwrap import wrap
 import unicodedata
-from tkinter import messagebox
 
 import os
 from pathlib import Path
@@ -18,25 +17,70 @@ import xlrd
 from docxtpl import DocxTemplate
 from docxcompose.composer import Composer
 from docx import Document as Document_compose
-import codep38.codep38gui.guiglobals as gg
 
 
 
+VERSION = '01'
+semi_quadratin = "\u2014"
+JOURS_DIC = {"Monday" :"lundi",
+             "Tuesday" :"mardi",
+             "Wednesday" :"mercredi",
+             "Thursday" :"jeudi",
+             "Friday" :"vendredi",
+             "Saturday" :"samedi",
+             "Sunday" :"dimanche",}
 
+MONTHS_DIC = {"janvier" : 1,
+              "février" : 2,
+              "mars" : 3,
+              "avril" : 4,
+              "mai" : 5,
+              "juin" : 6,
+              "juillet" : 7,
+              "août" : 8,
+              "septembre" : 9,
+              "octobre" : 10,
+              "novembre" : 11,
+              "décembre" : 12,}
 
-def make_table_matiere(year,df,PATH_OUTPUT_RANDOS,PATH_TEMPLATES_RANDOS):
+templates_dict = {'Route': 'template_randonnees_route.docx',
+                  'Route/ Gravel': 'template_randonnees_route_gravel.docx',
+                  'Route/ Pédestre': 'template_randonnees_route_pedestre.docx',
+                  'Route/ Vtt': 'template_randonnees_route_vtt.docx',
+                  'Route/ Vtt/ Gravel': 'template_randonnees_route_vtt_gravel.docx',
+                  'Route/ Vtt/ Pédestre': 'template_randonnees_route_vtt_pedestre.docx',
+                  "BOURSE AUX VELOS": 'template_randonnees_bourse_aux_velos.docx',
+                  'Vtt/ Pédestre': 'template_randonnees_vtt_pedestre.docx',
+                  'Vtt':'template_randonnees_vtt.docx',
+                  'Vtt/ Gravel':'template_randonnees_vtt_gravel.docx',
+                  'Route/ Vtt/ Pédestre/ Gravel': 'template_randonnees_route_vtt_pedestre_gravel.docx',
+                  'Route/ Pédestre/ Gravel': 'template_randonnees_route_pedestre_gravel.docx',
+                  'Pédestre/ Gravel':'template_randonnees_pedestre_gravel.docx',
+                  'Vtt/ Pédestre/ Gravel':'template_randonnees_vtt_pedestre_gravel.docx'}
 
-    output_file = PATH_OUTPUT_RANDOS / Path( 'liste_matiere.docx')
-    
+year = 2027
+#root = Path.home() / Path('CODEP38')  / Path(str(year)) / Path('randonnees') 
+
+#root = Path(r"C:\Users\franc\CODEP38") / Path(str(year)) / Path('randonnees') 
+#PATH_TEMPLATES = Path.home() / Path('CODEP38/TEMPLATES')
+root = Path.home() / Path(r"Dropbox\Codep 38") / Path(f"Année {year}") / Path(r'Calendrier\02 Fiches calendrier 2027 Ok à inscrire dans calendrier')
+PATH_TEMPLATES = Path(r"C:\Users\franc\Dropbox\Codep 38\Année 2026\Calendrier\TEMPLATES")
+PATH_OUTPUT = Path.home() / Path('CODEP38') / Path(str(year)) / Path('Calendrier')
+
+def make_table_matiere(df):
+
+    output_file = PATH_OUTPUT / Path( 'liste_matiere.docx')
+    pdep = 5
     frameworks = []
     for idx,row in df.iterrows():
         frameworks.append(dict(mois = row['date'].split(' ')[1] + ' ' + row['mois'],
                                typ = row['Type de manifestation'],
-                               name = row['nom_randonnee'],))
+                               name = row['nom_randonnee'],
+                               page = pdep + idx//2))
                 
     context ={'year': year,
               'frameworks': frameworks}
-    template_docx = PATH_TEMPLATES_RANDOS  / Path('template_Liste_matiere.docx')
+    template_docx = PATH_TEMPLATES  / Path('template_Liste_matiere.docx')
     doc = DocxTemplate(template_docx) 
     doc.render(context)
     doc.save(output_file)
@@ -57,13 +101,13 @@ def normalize_euro(text):
     text = pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
     return text
 
-def combine_all_docx(list_docx,year,PATH_OUTPUT_RANDOS,PATH_TEMPLATES_RANDOS):
+def combine_all_docx(list_docx,year):
 
     """
     Merges all the docx file contained in `list_docx` 
     """
 
-    filename_master = PATH_TEMPLATES_RANDOS / Path('premiere-de-couverture.docx')
+    filename_master = PATH_TEMPLATES / Path('premiere-de-couverture.docx')
     number_of_sections = len(list_docx)
     master = Document_compose(filename_master)
     composer = Composer(master)
@@ -75,12 +119,12 @@ def combine_all_docx(list_docx,year,PATH_OUTPUT_RANDOS,PATH_TEMPLATES_RANDOS):
             pass
             
     file_name = f'CALENDRIER_{str(year)}.docx'
-    combine_file = PATH_OUTPUT_RANDOS / file_name
+    combine_file = PATH_OUTPUT / file_name
     print(combine_file)
     composer.save(combine_file)
 
-def builds_organisation_docx(df,year,PATH_TEMPLATES_RANDOS,PATH_OUTPUT_RANDOS):
-    
+def builds_organisation_docx(df,year):
+    df.to_excel(r"C:\users\franc\Temp\spy.xlsx")
     long = 1  # for future use
     file_list = []
     list_docx = []
@@ -88,10 +132,10 @@ def builds_organisation_docx(df,year,PATH_TEMPLATES_RANDOS,PATH_OUTPUT_RANDOS):
     for i_dep in range(0,len(df),long):
         i_fin = i_dep+long
         template_path_docx = df['template'].tolist()[i_dep:i_fin][0]
-        template_path_docx = PATH_TEMPLATES_RANDOS / Path(template_path_docx)
+        template_path_docx = PATH_TEMPLATES / Path(template_path_docx)
         doc = DocxTemplate( template_path_docx)
         
-        f ={'version': gg.VERSION,
+        f ={'version': VERSION,
             'mois': df['mois'].tolist()[i_dep:i_fin],
             'jour': df['date'].tolist()[i_dep:i_fin],
             'titre1': df['nom_randonnee'].tolist()[i_dep:i_dep+long],
@@ -115,10 +159,9 @@ def builds_organisation_docx(df,year,PATH_TEMPLATES_RANDOS,PATH_OUTPUT_RANDOS):
             'mail': df['courriel'].tolist()[i_dep:i_fin],
             'web': df['web'].tolist()[i_dep:i_fin]}
             
-            
         doc.render(f)
         #    
-        output_file = PATH_OUTPUT_RANDOS / Path("5-sejour"+str(idx)+".docx")
+        output_file = PATH_OUTPUT / Path("5-sejour"+str(idx)+".docx")
         doc.save(output_file)
         list_docx.append(output_file)
     
@@ -133,7 +176,7 @@ def normalize_time(s):
     t = l[0].zfill(2)+ " h " + minutes
     return t
 
-def _dic_rando(year,root):
+def dic_rando_(year,root):
     
     YEAR = year
     jours = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche']
@@ -151,15 +194,14 @@ def _dic_rando(year,root):
         
     def parse_date(worksheet,workbook,num_row):
         my_date = worksheet.cell_value(num_row,1)
-        
     
         if isinstance(my_date,float):
             my_date = datetime.datetime(*xlrd.xldate_as_tuple(my_date, workbook.datemode))
             my_date = my_date.replace(year=year)
-        else:   
+        else:
             my_date_split = my_date.split()
             if my_date_split[0].lower() in jours:
-                my_date = datetime.datetime(YEAR,gg.MONTHS_DIC[my_date_split[2].lower()], int(my_date_split[1]))
+                my_date = datetime.datetime(YEAR,MONTHS_DIC[my_date_split[2].lower()], int(my_date_split[1]))
             elif "/" in my_date:
                 my_date_split = my_date.split('/')
                 my_date = datetime.datetime(YEAR,int(my_date_split[1]), int(my_date_split[0]))
@@ -428,7 +470,7 @@ def _dic_rando(year,root):
         item_dic = analyse_worsheet(worksheet)
         
         my_date = parse_date(worksheet,workbook,item_dic['Date:'])
-        week_day = gg.JOURS_DIC[calendar.day_name[my_date.weekday()]]
+        week_day = JOURS_DIC[calendar.day_name[my_date.weekday()]]
         nom_randonnee = parse_nom_randonnee(worksheet,item_dic['Nom de la randonnée :'])
         club_organisateur = parse_club_organisateur(worksheet,item_dic['Nom du club organisateur :'])
         numero_federal = parse_numero_federal(worksheet,item_dic['Nom du club organisateur :'])
@@ -441,6 +483,7 @@ def _dic_rando(year,root):
         horaire_ouverture_fin = parse_horaire_ouverture_fin(worksheet,workbook,item_dic['Horaires ouvertures'])
         horaire_fermeture = parse_horaire_fermeture(worksheet,workbook,item_dic['Horaires clôtures'] )
 
+
         if 'bourse' in nom_randonnee.lower():
             type_rando.append("BOURSE AUX VELOS")
         else:
@@ -450,8 +493,8 @@ def _dic_rando(year,root):
                 if len(distances_route)> 0 :type_rando.append( "Route")
                 
             distances_vtt = ''
-            if 'Distances parcours VTT' in item_dic.keys():
-                distances_vtt = parse_distance_vtt(worksheet,item_dic['Distances parcours VTT'])
+            if 'distances parcours VTT' in item_dic.keys():
+                distances_vtt = parse_distance_vtt(worksheet,item_dic['distances parcours VTT'])
                 if len(distances_vtt)> 0 :type_rando.append("Vtt")
     
             distances_pedestre = ''
@@ -462,8 +505,7 @@ def _dic_rando(year,root):
             distances_gravel = ''
             if 'Distances parcours Gravel' in item_dic.keys():
                 distances_gravel = parse_distance_gravel(worksheet,item_dic['Distances parcours Gravel'])
-                #print( distances_gravel,file)
-                type_rando.append("Gravel")
+                if len(distances_gravel)> 0 : type_rando.append("Gravel")
       
         type_rando = '/ '.join(type_rando)
             
@@ -525,40 +567,35 @@ def _dic_rando(year,root):
         
     return dic_rando
     
-def make_calendar_rando(year,ctg_path):
-    
-    root = Path.home() / Path('CODEP38') / Path(str(year)) / Path('randonnees') 
-    PATH_TEMPLATES_RANDOS = Path(ctg_path) / Path(f"Année {str(year)}\Calendrier\TEMPLATES")
-    PATH_OUTPUT_RANDOS = Path.home() / Path('CODEP38') / Path(str(year)) / Path('Calendrier')
-    
-    dic_rando = _dic_rando(year,root)
+def make_calendar():
+    dic_rando = dic_rando_(year,root)
     
     df = pd.DataFrame(dic_rando)
     df = df.sort_values(by='full_date',ascending=True)
     df["club_organisateur"] = df["club_organisateur"] + \
-                                 f" {gg.semi_quadratin} " + df["numero_federal"].astype(str)
+                                 f" {semi_quadratin} " + df["numero_federal"].astype(str)
     df["horaire"] = "De " + df["horaire_ouverture_deb"] + " à " \
-                    + df["horaire_ouverture_fin"] + f" {gg.semi_quadratin} Clôture à " \
+                    + df["horaire_ouverture_fin"] + f" {semi_quadratin} Clôture à " \
                     + df["horaire_fermeture"]
     df["tel_mobile"] = df.apply(concat_tel,axis=1)
     df["tarifs_ffct_route"] = df["tarifs_ffct_route"].apply(lambda x: str(int(x))+ "€" if isinstance(x,float) else "")
     df["tarifs_pedestre"] = df["tarifs_pedestre"].apply(lambda x: str(int(x))+ "€" if isinstance(x,float) else "")
     df["tarifs_non_ffct_route"] = df["tarifs_non_ffct_route"].apply(lambda x: str(int(x))+ "€" if isinstance(x,float) else "")
-    month_dic_inv = dict(zip([str(x) for x in gg.MONTHS_DIC.values()],[x.capitalize() for x in gg.MONTHS_DIC.keys()]))
+    month_dic_inv = dict(zip([str(x) for x in MONTHS_DIC.values()],[x.capitalize() for x in MONTHS_DIC.keys()]))
     df['mois'] = df['mois'].map(month_dic_inv )
-    df['template'] = df['Type de manifestation'].map(gg.templates_dict)
+    df['template'] = df['Type de manifestation'].map(templates_dict)
     #df = df.drop(['full_date'],axis=1)
     
-    list_docx = builds_organisation_docx(df,year,PATH_TEMPLATES_RANDOS,PATH_OUTPUT_RANDOS)
-    make_table_matiere(year,df,PATH_OUTPUT_RANDOS,PATH_TEMPLATES_RANDOS)
-    list_docx.insert(0, PATH_OUTPUT_RANDOS / Path('liste_matiere.docx'))
-    list_docx.insert(1, PATH_TEMPLATES_RANDOS / Path('reunion assurance.docx'))
+    list_docx = builds_organisation_docx(df,year)
+    make_table_matiere(df)
+    list_docx.insert(0, PATH_OUTPUT / Path('liste_matiere.docx'))
+    #list_docx.insert(1, PATH_TEMPLATES / Path('reunion assurance.docx'))
     
-    combine_all_docx(list_docx,year,PATH_OUTPUT_RANDOS,PATH_TEMPLATES_RANDOS)
+    combine_all_docx(list_docx,year)
     output_file = root / Path('randos_synthese'+str(year)+'.xlsx')
     
     df.to_excel(output_file,index = False)
     dg = df.groupby(['Type de manifestation'])['nom_randonnee'].count()
-    print(dg)
+
     
     messagebox.showinfo("Information", f"votre fichier a été créé sous: {output_file}")
