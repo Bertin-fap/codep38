@@ -1,5 +1,5 @@
-# Exploitation des fiches challenge
-# Standard library imports
+__all__ ='plot_stat_rando'
+
 from collections import defaultdict
 import os
 import math
@@ -21,14 +21,13 @@ def nan2zero(s):
         return int(s)
     return 0
     
-def extraction():
+def extraction(root):
     d = defaultdict(list)
     club_route = defaultdict(list)
     data = defaultdict(list)
     #club_gravel = defaultdict(list)
     for file in [x for x in os.listdir(root) if x.endswith('.xls') ]:
-        print(file)
-        workbook = xlrd.open_workbook(root / Path(file), formatting_info=True)
+        workbook = xlrd.open_workbook(Path(root) / Path(file), formatting_info=True)
         worksheet_route = workbook.sheet_by_name('1 ROUTE ')
         worksheet_vtt = workbook.sheet_by_name('2 VTT')
         worksheet_pedestre = workbook.sheet_by_name('4 MARCHE')
@@ -84,37 +83,41 @@ def extraction():
             i += 1  
         d['# cub_ffct'].append(len(set(map(itemgetter(0), club_route[nom_rando]))))
     return d,club_route,data
-year = 2024
-root = Path(r"C:\Users\franc\CODEP38") / Path(str(year))/ Path("fiches_challenge")
-d,club_route,data = extraction()
 
-df = pd.DataFrame(d)
-df['tot'] = df['route'] + df['vtt'] + df['pedestre']+df['gravel']
-df = df.sort_values(['tot'])
-df.to_excel(root / Path('STAT') / Path('participation_rando_club38.xlsx'),index=False)
-#df = df.drop('tot', axis=1)
-df.index = df['nom_rando']
-ax = df[['route','vtt','pedestre','gravel']].plot(kind='barh', stacked=True, figsize=(8,8))
-ax.tick_params(axis='y', labelsize=7)
-x = [int(x+y+z+v) for x,y,z,v in zip(df['route'],
-                                     df["vtt"],
-                                     df["pedestre"],
-                                     df["gravel"]) ]
-lab = [str(round(100-100*int(w)/int(x+y+z+v),1))+"%" if int(x+y+z+v)>0 else '' for x,y,z,v,w in zip(df['route'],
-                                     df["vtt"],
-                                     df["pedestre"],
-                                     df["gravel"],
-                                     df["non_ffct"]) ]
-addlabels(x,
-          range(len(df)),lab)
-plt.yticks(range(len(df)), df['nom_rando'])
+def plot_stat_rando(codep_path,year):
 
-plt.ylabel('')
-plt.grid(which='major', axis='x')
-
-
-plt.tight_layout()
-plt.savefig(root / Path('STAT') /Path('participation_rando_club38.png'))
-
-dg = pd.DataFrame.from_dict(data)
-dg.to_excel(r'c:\users\franc\Temp\spy.xlsx',index=None)
+    root = Path(codep_path) / Path(f'Année {str(year)}') / Path(r"Calendrier/fiches challenge")
+    d,club_route,data = extraction(root)
+    
+    df = pd.DataFrame(d)
+    df['tot'] = df['route'] + df['vtt'] + df['pedestre']+df['gravel']
+    df = df.sort_values(['tot'])
+    df.to_excel(root / Path('STAT') / Path('participation_rando_club38.xlsx'),index=False)
+    #df = df.drop('tot', axis=1)
+    df.index = df['nom_rando']
+    
+    ax = df[['route','vtt','pedestre','gravel']].plot(kind='barh', stacked=True, figsize=(8,8))
+    ax.tick_params(axis='y', labelsize=7)
+    x = [int(x+y+z+v) for x,y,z,v in zip(df['route'],
+                                         df["vtt"],
+                                         df["pedestre"],
+                                         df["gravel"]) ]
+    lab = [str(round(100-100*int(w)/int(x+y+z+v),1))+"%" if int(x+y+z+v)>0 else '' for x,y,z,v,w in zip(df['route'],
+                                         df["vtt"],
+                                         df["pedestre"],
+                                         df["gravel"],
+                                         df["non_ffct"]) ]
+    addlabels(x,
+              range(len(df)),lab)
+    plt.yticks(range(len(df)), df['nom_rando'])
+    
+    plt.ylabel('')
+    plt.grid(which='major', axis='x')
+    
+    
+    plt.tight_layout()
+    plt.savefig(root / Path('STAT') /Path('participation_rando_club38.png'))
+    plt.show()
+    
+    #dg = pd.DataFrame.from_dict(data)
+    #dg.to_excel(r'c:\users\franc\Temp\spy.xlsx',index

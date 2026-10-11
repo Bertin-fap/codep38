@@ -61,13 +61,6 @@ templates_dict = {'Route': 'template_randonnees_route.docx',
                   'Vtt/ Pédestre/ Gravel':'template_randonnees_vtt_pedestre_gravel.docx',
                   'Vtt/ Pédestre':'template_randonnees_vtt_pedestre.docx'}
 
-
-#root = Path.home() / Path('CODEP38')  / Path(str(year)) / Path('randonnees') 
-
-#root = Path(r"C:\Users\franc\CODEP38") / Path(str(year)) / Path('randonnees') 
-#PATH_TEMPLATES = Path.home() / Path('CODEP38/TEMPLATES')
-
-
 def make_table_matiere(df,PATH_OUTPUT,PATH_TEMPLATES,year):
 
     output_file = PATH_OUTPUT / Path( 'liste_matiere.docx')
