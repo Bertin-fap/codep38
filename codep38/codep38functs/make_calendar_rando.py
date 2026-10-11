@@ -1,5 +1,4 @@
-__all__ = ['make_calendar_rando']
-
+__all__ ='make_calendar_rando'
 from datetime import date
 import datetime
 import calendar
@@ -7,6 +6,7 @@ import re
 from collections import defaultdict
 from textwrap import wrap
 import unicodedata
+from tkinter import messagebox
 
 import os
 from pathlib import Path
@@ -43,6 +43,8 @@ MONTHS_DIC = {"janvier" : 1,
               "novembre" : 11,
               "décembre" : 12,}
 
+INV_MONTH_DIC = dict(zip(MONTHS_DIC.values(),MONTHS_DIC.keys()))
+
 templates_dict = {'Route': 'template_randonnees_route.docx',
                   'Route/ Gravel': 'template_randonnees_route_gravel.docx',
                   'Route/ Pédestre': 'template_randonnees_route_pedestre.docx',
@@ -56,24 +58,28 @@ templates_dict = {'Route': 'template_randonnees_route.docx',
                   'Route/ Vtt/ Pédestre/ Gravel': 'template_randonnees_route_vtt_pedestre_gravel.docx',
                   'Route/ Pédestre/ Gravel': 'template_randonnees_route_pedestre_gravel.docx',
                   'Pédestre/ Gravel':'template_randonnees_pedestre_gravel.docx',
-                  'Vtt/ Pédestre/ Gravel':'template_randonnees_vtt_pedestre_gravel.docx'}
+                  'Vtt/ Pédestre/ Gravel':'template_randonnees_vtt_pedestre_gravel.docx',
+                  'Vtt/ Pédestre':'template_randonnees_vtt_pedestre.docx'}
 
-year = 2027
+
 #root = Path.home() / Path('CODEP38')  / Path(str(year)) / Path('randonnees') 
 
 #root = Path(r"C:\Users\franc\CODEP38") / Path(str(year)) / Path('randonnees') 
 #PATH_TEMPLATES = Path.home() / Path('CODEP38/TEMPLATES')
-root = Path.home() / Path(r"Dropbox\Codep 38") / Path(f"Année {year}") / Path(r'Calendrier\02 Fiches calendrier 2027 Ok à inscrire dans calendrier')
-PATH_TEMPLATES = Path(r"C:\Users\franc\Dropbox\Codep 38\Année 2026\Calendrier\TEMPLATES")
-PATH_OUTPUT = Path.home() / Path('CODEP38') / Path(str(year)) / Path('Calendrier')
 
-def make_table_matiere(df):
+
+def make_table_matiere(df,PATH_OUTPUT,PATH_TEMPLATES,year):
 
     output_file = PATH_OUTPUT / Path( 'liste_matiere.docx')
     pdep = 5
     frameworks = []
     for idx,row in df.iterrows():
-        frameworks.append(dict(mois = row['date'].split(' ')[1] + ' ' + row['mois'],
+        if 'BAC' in row['nom_randonnee']:
+            date = '19-20 Juin'
+        else:
+            date = row['date'].split(' ')[1] + ' ' + row['mois']
+        
+        frameworks.append(dict(mois = date,
                                typ = row['Type de manifestation'],
                                name = row['nom_randonnee'],
                                page = pdep + idx//2))
@@ -101,7 +107,7 @@ def normalize_euro(text):
     text = pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
     return text
 
-def combine_all_docx(list_docx,year):
+def combine_all_docx(list_docx,year,PATH_TEMPLATES,PATH_OUTPUT):
 
     """
     Merges all the docx file contained in `list_docx` 
@@ -123,7 +129,7 @@ def combine_all_docx(list_docx,year):
     print(combine_file)
     composer.save(combine_file)
 
-def builds_organisation_docx(df,year):
+def builds_organisation_docx(df,year,PATH_TEMPLATES,PATH_OUTPUT):
     df.to_excel(r"C:\users\franc\Temp\spy.xlsx")
     long = 1  # for future use
     file_list = []
@@ -471,6 +477,9 @@ def dic_rando_(year,root):
         
         my_date = parse_date(worksheet,workbook,item_dic['Date:'])
         week_day = JOURS_DIC[calendar.day_name[my_date.weekday()]]
+    
+        month = INV_MONTH_DIC[my_date.month]
+
         nom_randonnee = parse_nom_randonnee(worksheet,item_dic['Nom de la randonnée :'])
         club_organisateur = parse_club_organisateur(worksheet,item_dic['Nom du club organisateur :'])
         numero_federal = parse_numero_federal(worksheet,item_dic['Nom du club organisateur :'])
@@ -534,8 +543,13 @@ def dic_rando_(year,root):
 
         
         dic_rando['nom_randonnee'].append(nom_randonnee)
-        dic_rando['Type de manifestation'].append(type_rando) 
-        dic_rando['date'].append(f'{week_day.capitalize()} {str(my_date.day)}')
+        dic_rando['Type de manifestation'].append(type_rando)
+        
+        if 'BAC' in nom_randonnee:
+            dic_rando['date'].append(f'Samedi 19 juin et dimanche 20 juin')
+        else:
+            dic_rando['date'].append(f'{week_day.capitalize()} {str(my_date.day)}')
+            
         dic_rando['mois'].append(str(my_date.month))
         dic_rando['club_organisateur'].append(club_organisateur) 
         dic_rando['numero_federal'].append(numero_federal) 
@@ -567,7 +581,12 @@ def dic_rando_(year,root):
         
     return dic_rando
     
-def make_calendar():
+def make_calendar_rando(codep_path,year):
+    PATH_TEMPLATES = Path(codep_path) / Path(r"Année 2026\Calendrier\TEMPLATES")
+    PATH_OUTPUT = Path.home() / Path('CODEP38') / Path(str(year)) / Path('Calendrier')
+    root = Path(codep_path) / Path(f"Année {year}")
+    root = root / Path(r"Calendrier\02 Fiches calendrier 2027 Ok à inscrire dans calendrier")
+    
     dic_rando = dic_rando_(year,root)
     
     df = pd.DataFrame(dic_rando)
@@ -584,18 +603,20 @@ def make_calendar():
     month_dic_inv = dict(zip([str(x) for x in MONTHS_DIC.values()],[x.capitalize() for x in MONTHS_DIC.keys()]))
     df['mois'] = df['mois'].map(month_dic_inv )
     df['template'] = df['Type de manifestation'].map(templates_dict)
+    
     #df = df.drop(['full_date'],axis=1)
     
-    list_docx = builds_organisation_docx(df,year)
-    make_table_matiere(df)
+    list_docx = builds_organisation_docx(df,year,PATH_TEMPLATES,PATH_OUTPUT)
+    make_table_matiere(df,PATH_OUTPUT,PATH_TEMPLATES,year)
     list_docx.insert(0, PATH_OUTPUT / Path('liste_matiere.docx'))
     #list_docx.insert(1, PATH_TEMPLATES / Path('reunion assurance.docx'))
-    
-    combine_all_docx(list_docx,year)
-    output_file = root / Path('randos_synthese'+str(year)+'.xlsx')
-    
-    df.to_excel(output_file,index = False)
-    dg = df.groupby(['Type de manifestation'])['nom_randonnee'].count()
 
+    output_file = root / Path('randos_synthese'+str(year)+'.xlsx')
+    df.to_excel(output_file,index = False)
     
+    combine_all_docx(list_docx,year,PATH_TEMPLATES,PATH_OUTPUT)
+    
+    dg = df.groupby(['Type de manifestation'])['nom_randonnee'].count()
+    print(dg)
+
     messagebox.showinfo("Information", f"votre fichier a été créé sous: {output_file}")

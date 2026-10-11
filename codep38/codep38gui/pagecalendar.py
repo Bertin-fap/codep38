@@ -1,6 +1,7 @@
 __all__ = ['create_calendar']
 
 # Standard library imports
+import datetime
 import os
 import shutil
 import tkinter as tk
@@ -41,15 +42,10 @@ def create_calendar(self, master, page_name, institute, ctg_path):
     """
 
     # Internal functions
+   
     def _build_calendar(ctg_path):
-
-        # Getting year selection
         year =  variable_year.get()
-        make_calendar_rando(int(year),ctg_path)
-
-    def _excel2word_button(ctg_path):
-        year =  variable_year.get()
-        make_calendar_rando(int(year),ctg_path)
+        make_calendar_rando(ctg_path,int(year))
 
     from codep38.codep38gui.pageclasses import AppMain
 
@@ -77,7 +73,10 @@ def create_calendar(self, master, page_name, institute, ctg_path):
     etape_underline    = -1
 
     ### Choix de l'année
-    list_years = list(range(2024,2035))
+    
+    today = datetime.date.today()
+    current_year = today.year
+    list_years = list(range(current_year-1,current_year+2))
     default_year = list_years[0]
     variable_year = tk.StringVar(self)
     variable_year.set(default_year)
@@ -110,7 +109,7 @@ def create_calendar(self, master, page_name, institute, ctg_path):
                                          weight = 'bold')
     #gg.TEXT_TENDANCE_SORTIES
     build_calendar_label = tk.Label(self,
-                                 text = "Contruction de la grille Excel",
+                                 text = "Contruction de la grilldu calendrier",
                                  justify = etape_label_format,
                                  font = build_calendar_font,
                                  underline = etape_underline)
@@ -123,7 +122,7 @@ def create_calendar(self, master, page_name, institute, ctg_path):
                                   size = eff_help_font_size)
     #gg.HELP_TENDANCE_SORTIES
     help_label = tk.Label(self,
-                        text = "La grille Excel est utilisée pour la construction du calendrier",
+                        text = "Construction du calendrier des randonnées du Copep38",
                         justify = "left",
                         font = help_label_font)
     place_bellow(build_calendar_label,
@@ -145,40 +144,40 @@ def create_calendar(self, master, page_name, institute, ctg_path):
     ################## Construction du calendrier Word
 
     #gg.TEXT_PRESENCE_EFFECTIF
-    excel2word_font = tkFont.Font(family = gg.FONT_NAME,
-                                size = eff_etape_font_size,
-                                weight = 'bold')
-    excel2word_label = tk.Label(self,
-                              text = "construction du calendrier Word",
-                              justify = "left",
-                              font = excel2word_font)
-    place_bellow(build_calendar_launch_button,
-                excel2word_label,
-                dx = year_analysis_label_dx_px,
-                dy = year_analysis_label_dy_px)
-
-    ### Explication de l'étape
-    help_label_font = tkFont.Font(family = gg.FONT_NAME,
-                                  size = eff_help_font_size)
-    #gg.HELP_PRESENCE_EFFECTIF
-    help_label = tk.Label(self,
-                        text = "Construction du calendrier Word à partir des descriptifs Excel",
-                        justify = "left",
-                        font = help_label_font)
-    place_bellow(excel2word_label,
-                help_label)
-
-    ### Bouton pour lancer l'analyse des mots clefs
-    excel2word_launch_font = tkFont.Font(family = gg.FONT_NAME,
-    
-                                                size = eff_launch_font_size)
-    #gg.BUTT_PRESENCE_EFFECTIF
-    excel2word_button = tk.Button(self,
-                               text = "Lancer la construction du fichier Word",
-                               font = excel2word_launch_font,
-                               command = lambda: _excel2word_button(ctg_path))
-    place_bellow(help_label,
-                excel2word_button,
-                dx = launch_dx_px,
-                dy = launch_dy_px)
-
+    #excel2word_font = tkFont.Font(family = gg.FONT_NAME,
+    #                            size = eff_etape_font_size,
+    #                            weight = 'bold')
+    #excel2word_label = tk.Label(self,
+    #                          text = "construction du calendrier Word",
+    #                          justify = "left",
+    #                          font = excel2word_font)
+    #place_bellow(build_calendar_launch_button,
+    #            excel2word_label,
+    #            dx = year_analysis_label_dx_px,
+    #            dy = year_analysis_label_dy_px)
+    #
+    #### Explication de l'étape
+    #help_label_font = tkFont.Font(family = gg.FONT_NAME,
+    #                              size = eff_help_font_size)
+    ##gg.HELP_PRESENCE_EFFECTIF
+    #help_label = tk.Label(self,
+    #                    text = "Construction du calendrier à partir des descriptifs Excel",
+    #                    justify = "left",
+    #                    font = help_label_font)
+    #place_bellow(excel2word_label,
+    #            help_label)
+    #
+    #### Bouton pour lancer l'analyse des mots clefs
+    #excel2word_launch_font = tkFont.Font(family = gg.FONT_NAME,
+    #
+    #                                            size = eff_launch_font_size)
+    ##gg.BUTT_PRESENCE_EFFECTIF
+    #excel2word_button = tk.Button(self,
+    #                           text = "Lancer la construction du fichier Word",
+    #                           font = excel2word_launch_font,
+    #                           command = lambda: _excel2word_button(ctg_path))
+    #place_bellow(help_label,
+    #            excel2word_button,
+    #            dx = launch_dx_px,
+    #            dy = launch_dy_px)
+    #
