@@ -27,6 +27,7 @@ def extraction(root):
     data = defaultdict(list)
     #club_gravel = defaultdict(list)
     for file in [x for x in os.listdir(root) if x.endswith('.xls') ]:
+        print(Path(root) / Path(file))
         workbook = xlrd.open_workbook(Path(root) / Path(file), formatting_info=True)
         worksheet_route = workbook.sheet_by_name('1 ROUTE ')
         worksheet_vtt = workbook.sheet_by_name('2 VTT')
@@ -95,7 +96,6 @@ def plot_stat_rando(codep_path,year):
     df.to_excel(root / Path('STAT') / Path('participation_rando_club38.xlsx'),index=False)
     #df = df.drop('tot', axis=1)
     df.index = df['nom_rando']
-    
     ax = df[['route','vtt','pedestre','gravel']].plot(kind='barh', stacked=True, figsize=(8,8))
     ax.tick_params(axis='y', labelsize=7)
     x = [int(x+y+z+v) for x,y,z,v in zip(df['route'],
@@ -116,8 +116,8 @@ def plot_stat_rando(codep_path,year):
     
     
     plt.tight_layout()
-    plt.savefig(root / Path('STAT') /Path('participation_rando_club38.png'))
     plt.show()
+    plt.savefig(root / Path('STAT') /Path('participation_rando_club38.png'))
     
     #dg = pd.DataFrame.from_dict(data)
-    #dg.to_excel(r'c:\users\franc\Temp\spy.xlsx',index
+    #dg.to_excel(r'c:\users\franc\Temp\spy.xlsx',index=None)

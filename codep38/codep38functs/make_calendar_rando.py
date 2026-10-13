@@ -1,4 +1,5 @@
 __all__ ='make_calendar_rando'
+
 from datetime import date
 import datetime
 import calendar
@@ -7,6 +8,26 @@ from collections import defaultdict
 from textwrap import wrap
 import unicodedata
 from tkinter import messagebox
+
+import os
+from pathlib import Path
+
+import pandas as pd
+import xlrd
+
+from docxtpl import DocxTemplate
+from docxcompose.composer import Composer
+from docx import Document as Document_compose
+
+
+
+from datetime import date
+import datetime
+import calendar
+import re
+from collections import defaultdict
+from textwrap import wrap
+import unicodedata
 
 import os
 from pathlib import Path
@@ -575,10 +596,12 @@ def dic_rando_(year,root):
     return dic_rando
     
 def make_calendar_rando(codep_path,year):
-    PATH_TEMPLATES = Path(codep_path) / Path(r"Année 2026\Calendrier\TEMPLATES")
-    PATH_OUTPUT = Path.home() / Path('CODEP38') / Path(str(year)) / Path('Calendrier')
-    root = Path(codep_path) / Path(f"Année {year}")
-    root = root / Path(r"Calendrier\02 Fiches calendrier 2027 Ok à inscrire dans calendrier")
+    PATH_TEMPLATES = Path(codep_path) / Path(r"Reference files\TEMPLATES_CALENDRIER")
+    #PATH_OUTPUT = Path.home() / Path('CODEP38') / Path(str(year)) / Path('Calendrier')
+    root = Path(codep_path) / Path(f"Année {year}") / Path('Calendrier')
+    PATH_OUTPUT = root / Path('TEMP')
+    PATH_OUTPUT.mkdir(parents=True, exist_ok=True)
+    root = root / Path(r"02 Fiches calendrier 2027 Ok à inscrire dans calendrier")
     
     dic_rando = dic_rando_(year,root)
     
@@ -610,6 +633,6 @@ def make_calendar_rando(codep_path,year):
     combine_all_docx(list_docx,year,PATH_TEMPLATES,PATH_OUTPUT)
     
     dg = df.groupby(['Type de manifestation'])['nom_randonnee'].count()
-    print(dg)
+    #print(dg)
 
     messagebox.showinfo("Information", f"votre fichier a été créé sous: {output_file}")
